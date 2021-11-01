@@ -9,11 +9,15 @@ const directionMap = {
 };
 
 const Snake = () => {
+    const gameAreaWidth = 44;
+    const gameAreaHeight = 15;
+
     let snakeDemo;
     let snake;
     let interval;
     let speed = 200;
-    let direction = directionMap.right; // 初始化默认向右
+    let direction;
+    let apple;
 
     // 初始化游戏相关的数据
     const _initGame = () => {
@@ -22,6 +26,8 @@ const Snake = () => {
             selector: '#snake-demo'
         });
         snake = [{ x:0, y:7 }, { x:1, y:7 }, { x:2, y:7 }];
+        apple = { x:24, y:7 };
+        direction = directionMap.right;
 
         document.querySelector('body')
         .addEventListener('keydown', _onChangeDirection);
@@ -32,6 +38,8 @@ const Snake = () => {
     // 绘制
     const _draw = () => {
         const emptyMap = snakeDemo.getEmptyMatrix();
+        // 画苹果
+        emptyMap[apple.y][apple.x] = 2;
         // 画snake
         snake.forEach(item => {
             emptyMap[item.y][item.x] = 1;
@@ -65,6 +73,20 @@ const Snake = () => {
                 break;
         }
         
+        // 判定snake是否超出游戏区域边界
+        if (_isSnakeCrossBorder()) {
+            alert('游戏失败，重新开始');
+            clearInterval(interval);
+            _initGame();
+        }
+
+        // 是否吃到苹果
+        if (_isEatingApple()) {
+            const snakeTail = Object.assign({}, snake[0]);
+            snake.unshift(snakeTail);
+            _generateApple();
+        }
+
         _draw();
     }
 
@@ -78,6 +100,36 @@ const Snake = () => {
                 return;
         }
         direction = newCodeKey;
+    }
+
+    // 是否吃到苹果
+    const _isEatingApple = () => {
+        return snake[snake.length-1].x === apple.x && snake[snake.length-1].y === apple.y;
+    }
+
+    // 生成苹果
+    const _generateApple = () => {
+        let newAppleX;
+        let newAppleY;
+        let isOverlappingSnake = true;  // 是否与贪吃蛇重合
+
+        while (isOverlappingSnake) {
+            newAppleX = Math.floor(Math.random() * gameAreaWidth);
+            newAppleY = Math.floor(Math.random() * gameAreaHeight);
+
+            isOverlappingSnake = snake.some((item) => (item.x === newAppleX) && (item.y === newAppleY))
+        }
+
+        apple = {
+            x: newAppleX,
+            y: newAppleY
+        }
+    }
+
+    // 贪吃蛇是否越界
+    const _isSnakeCrossBorder = () => {
+        const snakeHead = snake[snake.length-1];
+        return snakeHead.x < 0 || snakeHead.y < 0 || snakeHead.x > gameAreaWidth-1 || snakeHead.y > gameAreaHeight-1;
     }
 
     useEffect(
